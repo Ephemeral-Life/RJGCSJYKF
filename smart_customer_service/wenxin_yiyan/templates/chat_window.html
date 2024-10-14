@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>智能客服系统</title>
+    <style>
+        /* 页面全局样式 */
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f5f7fa;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+
+        .chat-container {
+            width: 90%;
+            max-width: 600px;
+            background-color: #ffffff;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* 消息窗口 */
+        .messages {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .message {
+            padding: 10px 15px;
+            border-radius: 10px;
+            max-width: 70%;
+            font-size: 15px;
+            line-height: 1.4;
+            word-wrap: break-word;
+            width: fit-content;
+        }
+
+        .user {
+            align-self: flex-end;
+            background-color: #0084ff;
+            color: #ffffff;
+            border-radius: 10px 10px 0 10px;
+        }
+
+        .bot {
+            align-self: flex-start;
+            background-color: #e8f0fe;
+            color: #333333;
+            border-radius: 10px 10px 10px 0;
+        }
+
+        /* 输入框和按钮 */
+        .input-container {
+            display: flex;
+            border-top: 1px solid #e0e0e0;
+            padding: 15px;
+            background-color: #ffffff;
+        }
+
+        .input-container input {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 15px;
+            outline: none;
+        }
+
+        .input-container button {
+            margin-left: 10px;
+            padding: 10px 20px;
+            background-color: #0084ff;
+            border: none;
+            border-radius: 5px;
+            color: #ffffff;
+            font-size: 15px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .input-container button:hover {
+            background-color: #006bbd;
+        }
+    </style>
+</head>
+<body>
+    <div class="chat-container">
+        <!-- 消息显示区 -->
+        <div class="messages" id="chat-messages"></div>
+
+        <!-- 输入区域 -->
+        <div class="input-container">
+            <input type="text" id="user-input" placeholder="请输入您的问题">
+            <button onclick="sendMessage()">发送</button>
+        </div>
+    </div>
+
+    <script>
+        function sendMessage() {
+            const userInput = document.getElementById("user-input").value;
+            if (userInput.trim() === "") return;
+
+            // 显示用户消息
+            displayMessage(userInput, "user");
+
+            // 清空输入框
+            document.getElementById("user-input").value = "";
+
+            // 发送请求到Django后端
+            fetch("{% url 'chatbot_response' %}", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({ message: userInput }),
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.response) {
+                    displayMessage(data.response, "bot");
+                } else {
+                    displayMessage("抱歉，暂时无法获取回答。", "bot");
+                }
+            })
+            .catch(() => {
+                displayMessage("抱歉，网络连接出现问题。", "bot");
+            });
+        }
+
+        function displayMessage(message, sender) {
+            const messageElement = document.createElement("div");
+            messageElement.classList.add("message", sender);
+            messageElement.innerText = message;
+            document.getElementById("chat-messages").appendChild(messageElement);
+
+            // 自动滚动到底部
+            document.getElementById("chat-messages").scrollTop = document.getElementById("chat-messages").scrollHeight;
+        }
+    </script>
+</body>
+</html>
